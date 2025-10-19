@@ -1,0 +1,44 @@
+# Trigger only on PR to main branch
+pr:
+  branches:
+    include:
+      - main
+
+# Use a Windows agent for .NET projects
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+# Install .NET SDK
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '7.x'
+
+# Restore NuGet packages
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '**/*.sln'
+
+# Build the solution
+- task: VSBuild@1
+  inputs:
+    solution: '**/*.sln'
+    msbuildArgs: '/p:Configuration=Release'
+    platform: 'any cpu'
+    configuration: 'Release'
+
+# Run tests
+- task: VSTest@2
+  inputs:
+    platform: 'any cpu'
+    configuration: 'Release'
+
+# Optional: Publish test results
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '**/TestResults/*.trx'
+    failTaskOnFailedTests: true
